@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>Streamline</title>
+    <link rel="preconnect" href="https://vidapi.ru">
+    <link rel="preconnect" href="https://vaplayer.ru">
+    <link rel="preconnect" href="https://image.tmdb.org">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary">
+        <a class="brand" href="#" aria-label="Streamline home">
+          <span class="brand-mark">S</span>
+          <span>Streamline</span>
+        </a>
+
+        <nav class="nav-tabs" aria-label="Sections">
+          <button class="nav-tab is-active" type="button" data-view="all">
+            <i data-lucide="sparkles"></i>
+            <span>Discover</span>
+          </button>
+          <button class="nav-tab" type="button" data-view="movies">
+            <i data-lucide="clapperboard"></i>
+            <span>Movies</span>
+          </button>
+          <button class="nav-tab" type="button" data-view="tv">
+            <i data-lucide="tv"></i>
+            <span>TV Shows</span>
+          </button>
+          <button class="nav-tab" type="button" data-view="episodes">
+            <i data-lucide="list-video"></i>
+            <span>Episodes</span>
+          </button>
+          <button class="nav-tab" type="button" data-view="watchlist">
+            <i data-lucide="bookmark"></i>
+            <span>Saved</span>
+          </button>
+        </nav>
+
+        <section class="rail-section" aria-labelledby="categoryTitle">
+          <div class="rail-heading">
+            <h2 id="categoryTitle">Genres</h2>
+            <button class="icon-button" type="button" id="resetFilters" aria-label="Reset filters" title="Reset filters">
+              <i data-lucide="rotate-ccw"></i>
+            </button>
+          </div>
+          <div class="genre-list" id="genreList"></div>
+        </section>
+
+        <section class="stats-panel" aria-label="Library stats">
+          <div>
+            <span class="stat-value" id="statMovies">...</span>
+            <span class="stat-label">Movies</span>
+          </div>
+          <div>
+            <span class="stat-value" id="statShows">...</span>
+            <span class="stat-label">Shows</span>
+          </div>
+          <div>
+            <span class="stat-value" id="statEpisodes">...</span>
+            <span class="stat-label">Episodes</span>
+          </div>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <form class="search-form" id="searchForm">
+            <label class="visually-hidden" for="searchInput">Search</label>
+            <i data-lucide="search"></i>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="Search movies and shows">
+            <button class="icon-button" type="submit" aria-label="Search" title="Search">
+              <i data-lucide="arrow-right"></i>
+            </button>
+          </form>
+
+          <div class="toolbar-actions">
+            <select id="sortSelect" aria-label="Sort">
+              <option value="relevance">Relevance</option>
+              <option value="latest">Latest</option>
+              <option value="rating">Top rated</option>
+              <option value="popularity">Popular</option>
+              <option value="year">Year</option>
+              <option value="az">A to Z</option>
+            </select>
+            <button class="ghost-button" type="button" id="refreshCatalog">
+              <i data-lucide="refresh-cw"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="status-strip" aria-label="Library status">
+          <div>
+            <p class="eyebrow">Library</p>
+            <h1 id="dbTitle">Getting everything ready</h1>
+            <p class="meta-line" id="dbStatus">Loading movies, shows, and episodes...</p>
+          </div>
+          <div class="status-actions">
+            <button class="ghost-button" type="button" id="loadMore">
+              <i data-lucide="plus"></i>
+              <span>More</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="player-layout" aria-label="Player">
+          <div class="player-stage">
+            <div class="poster-backdrop" id="posterBackdrop"></div>
+            <div class="iframe-shell" id="iframeShell">
+              <div class="player-empty" id="playerEmpty">
+                <i data-lucide="play-circle"></i>
+                <span>Select a title</span>
+              </div>
+              <iframe
+                id="playerFrame"
+                title="Video player"
+                allow="autoplay; fullscreen; picture-in-picture"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </div>
+
+          <aside class="player-panel" aria-label="Playback details">
+            <div class="now-playing">
+              <p class="eyebrow" id="nowType">Ready</p>
+              <h2 id="nowTitle">Pick something to watch</h2>
+              <p class="meta-line" id="nowMeta">Search or pick a title to start watching.</p>
+              <div class="progress-line" aria-label="Playback progress">
+                <span id="progressTime">0:00</span>
+                <div class="progress-track"><span id="progressFill"></span></div>
+                <span id="durationTime">0:00</span>
+              </div>
+            </div>
+
+            <div class="panel-actions">
+              <button class="primary-button" type="button" id="playSelected" disabled>
+                <i data-lucide="play"></i>
+                <span>Play</span>
+              </button>
+              <button class="icon-button" type="button" id="toggleWatchlist" aria-label="Save title" title="Save title" disabled>
+                <i data-lucide="bookmark-plus"></i>
+              </button>
+              <button class="icon-button" type="button" id="copyLink" aria-label="Copy embed link" title="Copy embed link" disabled>
+                <i data-lucide="link"></i>
+              </button>
+              <button class="icon-button" type="button" id="downloadButton" aria-label="Open player" title="Open player" disabled>
+                <i data-lucide="download"></i>
+              </button>
+              <button class="icon-button" type="button" id="castButton" aria-label="Cast" title="Cast" disabled>
+                <i data-lucide="cast"></i>
+              </button>
+            </div>
+
+            <form class="subtitle-form" id="subtitleForm">
+              <div class="form-row two">
+                <label>
+                  <span>Subtitle</span>
+                  <select id="subtitleLang">
+                    <option value="en">English</option>
+                    <option value="ar">Arabic</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="it">Italian</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="tr">Turkish</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Accent</span>
+                  <input id="playerColor" type="color" value="#4fc3b1">
+                </label>
+              </div>
+              <label>
+                <span>Subtitle URL</span>
+                <input id="subtitleUrl" type="url" placeholder="https://example.com/subtitles.vtt">
+              </label>
+              <div class="form-actions">
+                <button class="ghost-button" type="submit">
+                  <i data-lucide="captions"></i>
+                  <span>Apply</span>
+                </button>
+                <button class="icon-button" type="button" id="clearSubtitles" aria-label="Clear subtitles" title="Clear subtitles">
+                  <i data-lucide="x"></i>
+                </button>
+              </div>
+              <input id="subtitleLabel" type="hidden" value="Custom">
+              <input id="subtitleCode" type="hidden" value="en">
+              <input id="subtitleDefault" type="checkbox" checked hidden>
+            </form>
+          </aside>
+        </section>
+
+        <section class="manual-open" aria-label="Open by ID">
+          <form id="manualForm">
+            <select id="manualType" aria-label="Media type">
+              <option value="movie">Movie</option>
+              <option value="tv">TV Episode</option>
+            </select>
+            <input id="manualId" type="text" placeholder="IMDB or TMDB ID" autocomplete="off">
+            <input id="manualSeason" type="number" min="1" value="1" aria-label="Season">
+            <input id="manualEpisode" type="number" min="1" value="1" aria-label="Episode">
+            <button class="primary-button" type="submit">
+              <i data-lucide="send"></i>
+              <span>Open</span>
+            </button>
+          </form>
+        </section>
+
+        <section class="show-detail" id="showDetail" aria-label="TV show episodes" hidden>
+          <div class="show-hero" id="showHero">
+            <div>
+              <p class="eyebrow" id="showEyebrow">TV Show</p>
+              <h2 id="showTitle">Select a show</h2>
+              <p class="meta-line" id="showMeta"></p>
+            </div>
+            <button class="primary-button" type="button" id="resumeShow" disabled>
+              <i data-lucide="play"></i>
+              <span>Resume</span>
+            </button>
+          </div>
+          <div class="season-tabs" id="seasonTabs"></div>
+          <div class="episode-browser" id="episodeBrowser"></div>
+        </section>
+
+        <section class="continue-section" id="continueSection" aria-label="Continue watching" hidden>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Resume</p>
+              <h2>Continue Watching</h2>
+            </div>
+          </div>
+          <div class="continue-rail" id="continueRail"></div>
+        </section>
+
+        <section class="content-band" aria-live="polite">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow" id="resultEyebrow">Explore</p>
+              <h2 id="resultTitle">Latest Picks</h2>
+            </div>
+            <span id="resultCount">0 titles</span>
+          </div>
+          <div class="catalog-grid" id="catalogGrid"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="cardTemplate">
+      <article class="media-card">
+        <button class="poster-button" type="button">
+          <img alt="" loading="lazy">
+          <span class="poster-fallback"></span>
+          <span class="play-badge"><i data-lucide="play"></i></span>
+        </button>
+        <div class="card-body">
+          <div class="card-title-row">
+            <h3></h3>
+            <button class="icon-button compact watch-button" type="button" aria-label="Toggle saved" title="Toggle saved">
+              <i data-lucide="bookmark"></i>
+            </button>
+          </div>
+          <p class="meta-line"></p>
+          <div class="tag-line"></div>
+        </div>
+      </article>
+    </template>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

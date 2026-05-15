@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "build:catalog": "node scripts/build-catalog-db.mjs",
+    "build:catalog:safe": "node scripts/build-catalog-db.mjs --concurrency 1 --retries 12 --retry-delay 1800",
+    "build:catalog:quick": "node scripts/build-catalog-db.mjs --max-pages 2",
+    "build:catalog:shows": "node scripts/build-catalog-db.mjs --skip-episodes",
+    "build:catalog:episode-ids": "node scripts/build-catalog-db.mjs --episodes-from-ids",
+    "build:cache-manifest": "node scripts/build-cache-manifest.mjs",
+    "serve": "python3 -m http.server 5173"
+  }
+}
