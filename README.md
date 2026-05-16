@@ -1,12 +1,15 @@
-# Streamline
+# Bara Al-Wa7sh
 
 A static streaming UI that searches a local VidAPI catalog database and plays titles through VidAPI embeds.
 
 ## Files
 
-- `index.html` - application shell
+- `index.html` - browse page
+- `watch.html` - full-screen playback page
 - `styles.css` - responsive UI theme
-- `app.js` - local shard search, TV episode browsing, playback, subtitles, progress, saved titles
+- `watch.css` - full-screen player styling
+- `app.js` - local shard search, TV episode browsing, recommendations, saved titles
+- `watch.js` - watch-session loading and playback progress storage
 - `scripts/build-catalog-db.mjs` - builds the project catalog database under `data/catalog`
 
 ## Run

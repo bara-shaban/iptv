@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>Watch - Bara Al-Wa7sh</title>
+    <link rel="preconnect" href="https://vaplayer.ru">
+    <link rel="stylesheet" href="watch.css">
+  </head>
+  <body>
+    <main class="watch-shell">
+      <header class="watch-overlay">
+        <a class="watch-back" href="index.html">Back</a>
+        <div class="watch-copy">
+          <p id="watchType">Now Playing</p>
+          <h1 id="watchTitle">Loading title</h1>
+        </div>
+        <div class="watch-actions">
+          <button class="watch-button" id="watchEpisodeToggle" type="button" hidden>Episodes</button>
+          <button class="watch-button" id="watchSourceToggle" type="button" hidden>Try source</button>
+          <button class="watch-button" id="watchRetry" type="button">Reload</button>
+        </div>
+      </header>
+
+      <iframe
+        id="watchFrame"
+        title="Video player"
+        allow="autoplay; fullscreen; picture-in-picture"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+      ></iframe>
+
+      <section class="watch-empty" id="watchEmpty" hidden>
+        <h2>No video selected</h2>
+        <p>Choose a movie or episode from the browse page.</p>
+        <a href="index.html">Back to browse</a>
+      </section>
+
+      <aside class="episode-panel" id="episodePanel" hidden aria-label="Episodes">
+        <div class="episode-panel-heading">
+          <div>
+            <p>Episodes</p>
+            <h2 id="episodePanelTitle">TV Show</h2>
+          </div>
+          <button class="watch-button compact" id="closeEpisodePanel" type="button" aria-label="Close episodes">Close</button>
+        </div>
+
+        <div class="watch-season-tabs" id="watchSeasonTabs"></div>
+        <div class="watch-episode-list" id="watchEpisodeList"></div>
+
+        <form class="manual-episode-jump" id="manualEpisodeJump" hidden>
+          <label>
+            <span>Season</span>
+            <input id="watchSeasonInput" type="number" min="1" value="1">
+          </label>
+          <label>
+            <span>Episode</span>
+            <input id="watchEpisodeInput" type="number" min="1" value="1">
+          </label>
+          <button class="watch-button" type="submit">Open</button>
+        </form>
+      </aside>
+    </main>
+
+    <script src="watch.js"></script>
+  </body>
+</html>

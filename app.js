@@ -12,6 +12,7 @@
     watchlist: "streamline:watchlist",
     watchItems: "streamline:watchItems",
     continueItems: "streamline:continueItems",
+    watchSession: "streamline:watchSession",
     progress: "streamline:progress:",
     cache: "streamline:cache:",
   };
@@ -22,6 +23,7 @@
     query: "",
     sort: "relevance",
     selected: null,
+    featured: null,
     selectedPlayable: null,
     currentUrl: "",
     latestPage: {
@@ -65,7 +67,7 @@
       label: "Custom",
       code: "en",
       isDefault: true,
-      color: "#4fc3b1",
+      color: "#e50914",
     },
     toastTimer: null,
   };
@@ -78,7 +80,7 @@
     collectElements();
     loadStoredState();
     bindEvents();
-    syncSubtitleForm();
+    applyAccentColor();
     syncManualFields();
     renderIcons();
     renderShell();
@@ -96,45 +98,33 @@
 
   function collectElements() {
     Object.assign(els, {
-      navTabs: [...document.querySelectorAll(".nav-tab")],
-      genreList: document.querySelector("#genreList"),
-      resetFilters: document.querySelector("#resetFilters"),
+      navTabs: [...document.querySelectorAll(".nav-tab[data-view]")],
+      openIdTrigger: document.querySelector("#openIdTrigger"),
       searchForm: document.querySelector("#searchForm"),
       searchInput: document.querySelector("#searchInput"),
       sortSelect: document.querySelector("#sortSelect"),
       refreshCatalog: document.querySelector("#refreshCatalog"),
+      browseHero: document.querySelector("#browseHero"),
+      browseHeroBackdrop: document.querySelector("#browseHeroBackdrop"),
+      heroEyebrow: document.querySelector("#heroEyebrow"),
+      heroTitle: document.querySelector("#heroTitle"),
+      heroMeta: document.querySelector("#heroMeta"),
+      heroPlay: document.querySelector("#heroPlay"),
+      heroSave: document.querySelector("#heroSave"),
       dbTitle: document.querySelector("#dbTitle"),
       dbStatus: document.querySelector("#dbStatus"),
       loadMore: document.querySelector("#loadMore"),
-      playerFrame: document.querySelector("#playerFrame"),
-      iframeShell: document.querySelector("#iframeShell"),
-      posterBackdrop: document.querySelector("#posterBackdrop"),
-      nowType: document.querySelector("#nowType"),
-      nowTitle: document.querySelector("#nowTitle"),
-      nowMeta: document.querySelector("#nowMeta"),
-      progressTime: document.querySelector("#progressTime"),
-      durationTime: document.querySelector("#durationTime"),
-      progressFill: document.querySelector("#progressFill"),
-      playSelected: document.querySelector("#playSelected"),
-      toggleWatchlist: document.querySelector("#toggleWatchlist"),
-      copyLink: document.querySelector("#copyLink"),
-      downloadButton: document.querySelector("#downloadButton"),
-      castButton: document.querySelector("#castButton"),
-      subtitleForm: document.querySelector("#subtitleForm"),
-      subtitleLang: document.querySelector("#subtitleLang"),
-      subtitleUrl: document.querySelector("#subtitleUrl"),
-      subtitleLabel: document.querySelector("#subtitleLabel"),
-      subtitleCode: document.querySelector("#subtitleCode"),
-      subtitleDefault: document.querySelector("#subtitleDefault"),
-      playerColor: document.querySelector("#playerColor"),
-      clearSubtitles: document.querySelector("#clearSubtitles"),
+      detailModal: document.querySelector("#detailModal"),
+      closeDetailModal: document.querySelector("#closeDetailModal"),
+      idModal: document.querySelector("#idModal"),
+      closeIdModal: document.querySelector("#closeIdModal"),
       manualForm: document.querySelector("#manualForm"),
       manualType: document.querySelector("#manualType"),
       manualId: document.querySelector("#manualId"),
       manualSeason: document.querySelector("#manualSeason"),
       manualEpisode: document.querySelector("#manualEpisode"),
-      continueSection: document.querySelector("#continueSection"),
-      continueRail: document.querySelector("#continueRail"),
+      manualEpisodeFields: document.querySelector(".manual-episode-fields"),
+      shelfStack: document.querySelector("#shelfStack"),
       showDetail: document.querySelector("#showDetail"),
       showHero: document.querySelector("#showHero"),
       showEyebrow: document.querySelector("#showEyebrow"),
@@ -146,6 +136,7 @@
       resultEyebrow: document.querySelector("#resultEyebrow"),
       resultTitle: document.querySelector("#resultTitle"),
       resultCount: document.querySelector("#resultCount"),
+      contentBand: document.querySelector("#contentBand"),
       catalogGrid: document.querySelector("#catalogGrid"),
       cardTemplate: document.querySelector("#cardTemplate"),
       statMovies: document.querySelector("#statMovies"),
@@ -174,21 +165,6 @@
         });
         renderShell();
       });
-    });
-
-    els.genreList.addEventListener("click", (event) => {
-      const chip = event.target.closest("[data-category]");
-      if (!chip) return;
-      state.category = chip.dataset.category;
-      renderShell();
-    });
-
-    els.resetFilters.addEventListener("click", () => {
-      state.category = "all";
-      state.query = "";
-      els.searchInput.value = "";
-      state.datasets.search = [];
-      renderShell();
     });
 
     els.searchForm.addEventListener("submit", (event) => {
@@ -223,56 +199,34 @@
       renderShell();
     });
 
-    els.catalogGrid.addEventListener("click", (event) => {
-      const watchButton = event.target.closest(".watch-button");
-      if (watchButton) {
-        const item = state.itemMap.get(watchButton.dataset.key);
-        if (item) toggleWatchlist(item);
-        return;
-      }
-      const posterButton = event.target.closest(".poster-button");
-      if (!posterButton) return;
-      const item = state.itemMap.get(posterButton.dataset.key);
-      if (item) selectItem(item, item.kind !== "tv");
-    });
+    els.catalogGrid.addEventListener("click", handleMediaGridClick);
+    els.shelfStack.addEventListener("click", handleMediaGridClick);
 
-    els.playSelected.addEventListener("click", () => playSelected());
-    els.toggleWatchlist.addEventListener("click", () => {
-      if (state.selected) toggleWatchlist(state.selected);
+    els.heroPlay.addEventListener("click", () => {
+      if (state.featured) selectItem(state.featured, state.featured.kind !== "tv");
     });
-    els.copyLink.addEventListener("click", () => {
-      if (state.currentUrl) copyToClipboard(state.currentUrl);
+    els.heroSave.addEventListener("click", () => {
+      if (state.featured) toggleWatchlist(state.featured);
     });
-    els.downloadButton.addEventListener("click", openDownloadSource);
-    els.castButton.addEventListener("click", castSelected);
-
-    els.subtitleForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      readSubtitleForm();
-      storeSubtitleState();
-      applyAccentColor();
-      if (state.selectedPlayable) playSelected();
-      toast("Subtitle settings applied.");
+    els.openIdTrigger.addEventListener("click", openIdModal);
+    els.closeIdModal.addEventListener("click", closeIdModal);
+    els.closeDetailModal.addEventListener("click", closeDetailModal);
+    els.idModal.addEventListener("click", (event) => {
+      if (event.target === els.idModal) closeIdModal();
     });
-
-    els.clearSubtitles.addEventListener("click", () => {
-      state.subtitles.url = "";
-      syncSubtitleForm();
-      storeSubtitleState();
-      if (state.selectedPlayable) playSelected();
+    els.detailModal.addEventListener("click", (event) => {
+      if (event.target === els.detailModal) closeDetailModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (!els.idModal.hidden) closeIdModal();
+      else if (!els.detailModal.hidden) closeDetailModal();
     });
 
     els.manualType.addEventListener("change", syncManualFields);
     els.manualForm.addEventListener("submit", (event) => {
       event.preventDefault();
       openManualItem();
-    });
-
-    els.continueRail.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-continue-key]");
-      if (!button) return;
-      const entry = state.continueItems.get(button.dataset.continueKey);
-      if (entry?.item) selectItem(entry.item, true);
     });
 
     els.resumeShow.addEventListener("click", () => {
@@ -294,7 +248,30 @@
       if (item) selectItem(item, true);
     });
 
-    window.addEventListener("message", handlePlayerMessage);
+  }
+
+  function handleMediaGridClick(event) {
+    const removeContinue = event.target.closest(".continue-remove-button");
+    if (removeContinue) {
+      removeContinueItem(removeContinue.dataset.continueKey);
+      return;
+    }
+    const continueButton = event.target.closest(".continue-poster-button");
+    if (continueButton) {
+      const entry = state.continueItems.get(continueButton.dataset.continueKey);
+      if (entry?.item) selectItem(entry.item, true);
+      return;
+    }
+    const watchButton = event.target.closest(".watch-button");
+    if (watchButton) {
+      const item = state.itemMap.get(watchButton.dataset.key);
+      if (item) toggleWatchlist(item);
+      return;
+    }
+    const posterButton = event.target.closest(".poster-button");
+    if (!posterButton) return;
+    const item = state.itemMap.get(posterButton.dataset.key);
+    if (item) selectItem(item, item.kind !== "tv");
   }
 
   async function loadManifest() {
@@ -681,19 +658,71 @@
     applyAccentColor();
     renderStats();
     renderDbStatus();
-    renderContinueWatching();
     renderShowDetail();
-    renderCategories(getScopedItems());
     const visible = getVisibleItems();
+    renderBrowseHero(visible);
+    renderShelves();
     renderResultHeader(visible.length);
     renderCards(visible);
-    updatePlayerChrome();
+    syncBrowseMode();
     renderIcons();
+  }
+
+  function openWatchPage() {
+    if (!state.selectedPlayable) return;
+    state.currentUrl = buildPlayerUrl(state.selectedPlayable);
+    const sessionShow = getSessionShowForPlayable(state.selectedPlayable);
+    sessionStorage.setItem(STORAGE.watchSession, JSON.stringify({
+      selected: snapshotItem(state.selected || state.selectedPlayable),
+      playable: snapshotItem(state.selectedPlayable),
+      show: sessionShow ? snapshotItem(sessionShow) : null,
+      episodes: sessionShow ? getCachedShowEpisodes(sessionShow).map((episode) => snapshotItem(episode)) : [],
+      url: state.currentUrl,
+      storedAt: Date.now(),
+    }));
+    window.location.assign("watch.html");
+  }
+
+  function getSessionShowForPlayable(item) {
+    if (!item || item.kind !== "episode") return null;
+    if (state.selected?.kind === "tv") return state.selected;
+    if (state.activeShow?.kind === "tv") {
+      const playableIds = new Set(getShowIdCandidates(item));
+      if (getShowIdCandidates(state.activeShow).some((id) => playableIds.has(id))) {
+        return state.activeShow;
+      }
+    }
+    return null;
+  }
+
+  function openDetailModal() {
+    els.detailModal.hidden = false;
+    syncModalBodyState();
+  }
+
+  function closeDetailModal() {
+    els.detailModal.hidden = true;
+    syncModalBodyState();
+  }
+
+  function openIdModal() {
+    els.idModal.hidden = false;
+    syncModalBodyState();
+    window.setTimeout(() => els.manualId.focus(), 0);
+  }
+
+  function closeIdModal() {
+    els.idModal.hidden = true;
+    syncModalBodyState();
+  }
+
+  function syncModalBodyState() {
+    document.body.classList.toggle("modal-open", !els.detailModal.hidden || !els.idModal.hidden);
   }
 
   function getScopedItems() {
     if (state.view === "watchlist") return getWatchlistItems();
-    if (state.query.trim().length >= 2) return state.datasets.search;
+    if (hasActiveQuery()) return state.datasets.search;
     if (state.view === "episodes") return state.datasets.episodes;
     if (state.view === "movies") return state.datasets.latest.filter((item) => item.kind === "movie");
     if (state.view === "tv") return state.datasets.latest.filter((item) => item.kind === "tv");
@@ -751,8 +780,223 @@
     };
     const [eyebrow, title] = labels[state.view] || labels.all;
     els.resultEyebrow.textContent = state.db.searching ? "Searching" : eyebrow;
-    els.resultTitle.textContent = state.query ? `Results for "${state.query}"` : title;
+    els.resultTitle.textContent = hasActiveQuery() ? `Results for "${state.query}"` : title;
     els.resultCount.textContent = `${compactNumber(count)} ${count === 1 ? "title" : "titles"}`;
+  }
+
+  function syncBrowseMode() {
+    const browsingRows = shouldShowBrowseRows() && els.shelfStack.childElementCount > 0;
+    els.shelfStack.hidden = !browsingRows;
+    els.contentBand.hidden = browsingRows;
+  }
+
+  function shouldShowBrowseRows() {
+    return !hasActiveQuery() && ["all", "movies", "tv"].includes(state.view);
+  }
+
+  function renderBrowseHero(items) {
+    const shouldShow = shouldShowBrowseRows();
+    const featured = shouldShow ? getFeaturedItem(items) : null;
+    state.featured = featured;
+    els.browseHero.hidden = !featured;
+    els.heroPlay.disabled = !featured;
+    els.heroSave.disabled = !featured;
+    if (!featured) return;
+
+    els.heroEyebrow.textContent = getTypeLabel(featured);
+    els.heroTitle.textContent = getDisplayTitle(featured);
+    els.heroMeta.textContent = getMetaLine(featured);
+    els.heroPlay.innerHTML = featured.kind === "tv"
+      ? '<i data-lucide="list-video"></i><span>Episodes</span>'
+      : '<i data-lucide="play"></i><span>Play</span>';
+    els.heroSave.innerHTML = state.watchlist.has(featured.key)
+      ? '<i data-lucide="check"></i><span>In My List</span>'
+      : '<i data-lucide="plus"></i><span>My List</span>';
+
+    const image = featured.backdrop_url || featured.poster_url || "";
+    els.browseHeroBackdrop.style.backgroundImage = image
+      ? `
+        linear-gradient(90deg, rgba(5, 5, 7, 0.98) 0%, rgba(5, 5, 7, 0.84) 42%, rgba(5, 5, 7, 0.28) 100%),
+        linear-gradient(180deg, rgba(5, 5, 7, 0.04), rgba(5, 5, 7, 0.96)),
+        url("${String(image).replace(/["\\\n\r]/g, "")}")
+      `
+      : "";
+  }
+
+  function getFeaturedItem(items) {
+    return [...items]
+      .filter((item) => item.kind !== "episode")
+      .sort((a, b) =>
+        Number(Boolean(b.poster_url)) - Number(Boolean(a.poster_url)) ||
+        toNumber(b.popularity) - toNumber(a.popularity) ||
+        toNumber(b.rating) - toNumber(a.rating)
+      )[0] || null;
+  }
+
+  function renderShelves() {
+    if (!shouldShowBrowseRows()) {
+      els.shelfStack.replaceChildren();
+      return;
+    }
+
+    const source = getVisibleItems();
+    const movies = source.filter((item) => item.kind === "movie");
+    const tv = source.filter((item) => item.kind === "tv");
+    const continueEntries = getContinueEntries();
+    const shelves = state.view === "movies"
+      ? [
+          ["Recommended For You", getRecommendationItems(movies)],
+          ["Popular Movies", sortByPopularity(movies)],
+          ["Top Rated Movies", sortByRating(movies)],
+          ["Recently Added", sortByLatest(movies)],
+        ]
+      : state.view === "tv"
+        ? [
+            ["Recommended For You", getRecommendationItems(tv)],
+            ["Popular TV Shows", sortByPopularity(tv)],
+            ["Top Rated TV Shows", sortByRating(tv)],
+            ["Recently Added", sortByLatest(tv)],
+          ]
+        : [
+            ["Continue Watching", continueEntries],
+            ["Recommended For You", getRecommendationItems(source)],
+            ["Trending Now", sortByPopularity(source)],
+            ["Movies", sortByLatest(movies)],
+            ["TV Shows", sortByLatest(tv)],
+            ["Top Rated", sortByRating(source)],
+          ];
+
+    const fragment = document.createDocumentFragment();
+    shelves
+      .map(([title, items]) => [title, title === "Continue Watching" ? items : mergeUniqueItems(items).slice(0, 18)])
+      .filter(([, items]) => items.length)
+      .forEach(([title, items]) => {
+        fragment.appendChild(title === "Continue Watching"
+          ? buildContinueShelf(items)
+          : buildShelf(title, items));
+      });
+    els.shelfStack.replaceChildren(fragment);
+  }
+
+  function buildShelf(title, items) {
+    const section = document.createElement("section");
+    section.className = "browse-shelf";
+    section.innerHTML = `
+      <div class="section-heading shelf-heading">
+        <h2>${escapeHTML(title)}</h2>
+      </div>
+      <div class="shelf-rail"></div>
+    `;
+    const rail = section.querySelector(".shelf-rail");
+    rail.replaceChildren(...items.map((item) => buildMediaCard(item, "shelf")));
+    return section;
+  }
+
+  function buildContinueShelf(entries) {
+    const section = document.createElement("section");
+    section.className = "browse-shelf continue-shelf";
+    section.innerHTML = `
+      <div class="section-heading shelf-heading">
+        <h2>Continue Watching</h2>
+      </div>
+      <div class="shelf-rail continue-shelf-rail"></div>
+    `;
+    const rail = section.querySelector(".shelf-rail");
+    rail.replaceChildren(...entries.map((entry) => buildContinueCard(entry)));
+    return section;
+  }
+
+  function buildContinueCard(entry) {
+    const item = entry.item;
+    const percent = entry.duration ? Math.min(100, Math.round((entry.progress / entry.duration) * 100)) : 0;
+    const card = document.createElement("article");
+    card.className = "media-card shelf-card continue-shelf-card";
+    card.innerHTML = `
+      <button class="poster-button continue-poster-button" type="button" data-continue-key="${escapeHTML(entry.key)}">
+        ${item.poster_url ? `<img src="${escapeHTML(item.poster_url)}" alt="${escapeHTML(getDisplayTitle(item))} poster" loading="lazy">` : ""}
+        <span class="poster-fallback">${escapeHTML(getInitials(getDisplayTitle(item)))}</span>
+        <span class="play-badge"><i data-lucide="play"></i></span>
+      </button>
+      <button class="icon-button compact continue-remove-button" type="button" data-continue-key="${escapeHTML(entry.key)}" aria-label="Remove from continue watching" title="Remove from continue watching">
+        <i data-lucide="x"></i>
+      </button>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h3>${escapeHTML(getDisplayTitle(item))}</h3>
+        </div>
+        <p class="meta-line">${escapeHTML(getTypeLabel(item))} • ${formatTime(entry.progress)}</p>
+        <span class="mini-progress"><span style="width: ${percent}%"></span></span>
+      </div>
+    `;
+    return card;
+  }
+
+  function sortByPopularity(items) {
+    return [...items].sort((a, b) =>
+      toNumber(b.popularity) - toNumber(a.popularity) ||
+      toNumber(b.rating) - toNumber(a.rating)
+    );
+  }
+
+  function sortByRating(items) {
+    return [...items].sort((a, b) =>
+      toNumber(b.rating) - toNumber(a.rating) ||
+      toNumber(b.popularity) - toNumber(a.popularity)
+    );
+  }
+
+  function sortByLatest(items) {
+    return [...items].sort((a, b) => (a._index || 0) - (b._index || 0));
+  }
+
+  function getRecommendationItems(items) {
+    const seeds = mergeUniqueItems([
+      ...getContinueSeedItems(),
+      ...getWatchlistItems(),
+    ]).filter((item) => item.kind !== "episode");
+    if (!seeds.length) return [];
+
+    const genreWeights = new Map();
+    seeds.forEach((item, index) => {
+      const weight = Math.max(1, 4 - index);
+      getCategories(item).forEach((genre) => {
+        if (genre === "Uncategorized") return;
+        genreWeights.set(genre, (genreWeights.get(genre) || 0) + weight);
+      });
+    });
+    if (!genreWeights.size) return [];
+
+    const excluded = new Set(seeds.map((item) => item.key));
+    return [...items]
+      .filter((item) => item.kind !== "episode" && !excluded.has(item.key))
+      .map((item) => ({
+        item,
+        score: getCategories(item).reduce((total, genre) => total + (genreWeights.get(genre) || 0), 0),
+      }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) =>
+        b.score - a.score ||
+        toNumber(b.item.popularity) - toNumber(a.item.popularity) ||
+        toNumber(b.item.rating) - toNumber(a.item.rating)
+      )
+      .map(({ item }) => item);
+  }
+
+  function getContinueSeedItems() {
+    return [...state.continueItems.values()]
+      .filter((entry) => entry.item && entry.progress > 5 && !String(entry.key).startsWith("episode:"))
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .map((entry) => getRecommendationSeedItem(entry.item))
+      .filter(Boolean);
+  }
+
+  function getRecommendationSeedItem(item) {
+    if (item.kind !== "episode") return item;
+    const ids = new Set([item.show_imdb_id, item.show_tmdb_id].filter(Boolean).map(String));
+    return state.datasets.latest.find((candidate) =>
+      candidate.kind === "tv" &&
+      [candidate.imdb_id, candidate.tmdb_id].some((id) => ids.has(String(id || "")))
+    ) || null;
   }
 
   function renderStats() {
@@ -761,37 +1005,13 @@
     els.statEpisodes.textContent = compactNumber(state.totals.episodes);
   }
 
-  function renderCategories(items) {
-    const counts = new Map();
-    items.forEach((item) => {
-      getCategories(item).forEach((category) => {
-        counts.set(category, (counts.get(category) || 0) + 1);
-      });
-    });
-    if (state.category !== "all" && !counts.has(state.category)) state.category = "all";
-
-    const chips = [["all", "All", items.length], ...[...counts.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .slice(0, 28)
-      .map(([name, count]) => [name, name, count])];
-
-    els.genreList.replaceChildren(...chips.map(([value, label, count]) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `genre-chip${state.category === value ? " is-active" : ""}`;
-      button.dataset.category = value;
-      button.innerHTML = `<span>${escapeHTML(label)}</span><small>${count}</small>`;
-      return button;
-    }));
-  }
-
   function renderCards(items) {
     if (state.db.searching) {
       els.catalogGrid.innerHTML = `<div class="empty-state">Searching...</div>`;
       return;
     }
     if (!items.length) {
-      const message = state.query
+      const message = hasActiveQuery()
         ? "No match found. Try a title, IMDB ID, or TMDB ID."
         : "No titles found.";
       els.catalogGrid.innerHTML = `<div class="empty-state">${message}</div>`;
@@ -800,37 +1020,7 @@
 
     const fragment = document.createDocumentFragment();
     items.slice(0, CARD_LIMIT).forEach((item) => {
-      const card = els.cardTemplate.content.firstElementChild.cloneNode(true);
-      const posterButton = card.querySelector(".poster-button");
-      const image = card.querySelector("img");
-      const fallback = card.querySelector(".poster-fallback");
-      const title = card.querySelector("h3");
-      const meta = card.querySelector(".meta-line");
-      const tags = card.querySelector(".tag-line");
-      const watchButton = card.querySelector(".watch-button");
-
-      posterButton.dataset.key = item.key;
-      watchButton.dataset.key = item.key;
-      card.classList.toggle("is-active", state.selected?.key === item.key);
-      if (item.poster_url) {
-        image.src = item.poster_url;
-        image.alt = `${getDisplayTitle(item)} poster`;
-      } else {
-        image.removeAttribute("src");
-        image.alt = "";
-      }
-      fallback.textContent = getInitials(getDisplayTitle(item));
-      title.textContent = getDisplayTitle(item);
-      meta.textContent = getMetaLine(item);
-      watchButton.classList.toggle("is-active", state.watchlist.has(item.key));
-
-      getTags(item).forEach((tag) => {
-        const span = document.createElement("span");
-        span.className = "tag";
-        span.innerHTML = `<span>${escapeHTML(tag)}</span>`;
-        tags.appendChild(span);
-      });
-      fragment.appendChild(card);
+      fragment.appendChild(buildMediaCard(item));
     });
 
     if (items.length > CARD_LIMIT) {
@@ -843,17 +1033,57 @@
     els.catalogGrid.replaceChildren(fragment);
   }
 
+  function hasActiveQuery() {
+    return state.query.trim().length >= 2;
+  }
+
+  function buildMediaCard(item, variant = "grid") {
+    const card = els.cardTemplate.content.firstElementChild.cloneNode(true);
+    const posterButton = card.querySelector(".poster-button");
+    const image = card.querySelector("img");
+    const fallback = card.querySelector(".poster-fallback");
+    const title = card.querySelector("h3");
+    const meta = card.querySelector(".meta-line");
+    const tags = card.querySelector(".tag-line");
+    const watchButton = card.querySelector(".watch-button");
+
+    posterButton.dataset.key = item.key;
+    watchButton.dataset.key = item.key;
+    card.classList.toggle("is-active", state.selected?.key === item.key);
+    card.classList.toggle("shelf-card", variant === "shelf");
+    if (item.poster_url) {
+      image.src = item.poster_url;
+      image.alt = `${getDisplayTitle(item)} poster`;
+    } else {
+      image.removeAttribute("src");
+      image.alt = "";
+    }
+    fallback.textContent = getInitials(getDisplayTitle(item));
+    title.textContent = getDisplayTitle(item);
+    meta.textContent = getMetaLine(item);
+    watchButton.classList.toggle("is-active", state.watchlist.has(item.key));
+
+    getTags(item).forEach((tag) => {
+      const span = document.createElement("span");
+      span.className = "tag";
+      span.innerHTML = `<span>${escapeHTML(tag)}</span>`;
+      tags.appendChild(span);
+    });
+    return card;
+  }
+
   async function selectItem(item, shouldPlay = false) {
     if (!item) return;
     state.selected = item;
     state.selectedPlayable = getPlayableItem(item);
     state.currentUrl = state.selectedPlayable ? buildPlayerUrl(state.selectedPlayable) : "";
-    updatePlayerChrome();
 
     if (item.kind === "tv") {
       state.activeShow = item;
       await prepareShowDetail(item);
-      shouldPlay = false;
+      renderShell();
+      openDetailModal();
+      return;
     }
 
     renderShell();
@@ -912,7 +1142,7 @@
       .sort((a, b) => a.episode - b.episode);
 
     if (!selectedEpisodes.length) {
-      els.episodeBrowser.innerHTML = `<div class="empty-state">No episodes found for this season yet.</div>`;
+      els.episodeBrowser.innerHTML = `<div class="empty-state">This show is not in the local episode list yet.</div>`;
       return;
     }
 
@@ -978,57 +1208,14 @@
 
   function playSelected() {
     if (!state.selectedPlayable) return;
-    state.currentUrl = buildPlayerUrl(state.selectedPlayable);
-    els.playerFrame.src = state.currentUrl;
-    els.iframeShell.classList.add("has-player");
-    updatePlayerChrome();
-  }
-
-  function updatePlayerChrome() {
-    const hasItem = Boolean(state.selectedPlayable);
-    els.playSelected.disabled = !hasItem;
-    els.toggleWatchlist.disabled = !state.selected;
-    els.copyLink.disabled = !state.currentUrl;
-    els.downloadButton.disabled = !hasItem;
-    els.castButton.disabled = !hasItem;
-
-    if (!hasItem) {
-      els.nowType.textContent = "Ready";
-      els.nowTitle.textContent = "Pick something to watch";
-      els.nowMeta.textContent = "Search or pick a title to start watching.";
-      els.posterBackdrop.classList.remove("has-poster");
-      els.posterBackdrop.style.backgroundImage = "";
-      return;
-    }
-
-    const item = state.selectedPlayable;
-    els.nowType.textContent = getTypeLabel(item);
-    els.nowTitle.textContent = item.playableTitle || getDisplayTitle(item);
-    els.nowMeta.textContent = item.playableMeta || getMetaLine(item);
-    const poster = item.poster_url || state.selected?.poster_url || "";
-    if (poster) {
-      els.posterBackdrop.classList.add("has-poster");
-      els.posterBackdrop.style.backgroundImage = `
-        linear-gradient(90deg, rgba(5, 10, 12, 0.9), rgba(5, 10, 12, 0.32)),
-        url("${String(poster).replace(/["\\\n\r]/g, "")}")
-      `;
-    } else {
-      els.posterBackdrop.classList.remove("has-poster");
-      els.posterBackdrop.style.backgroundImage = "";
-    }
-
-    const saved = state.selected && state.watchlist.has(state.selected.key);
-    els.toggleWatchlist.innerHTML = saved
-      ? '<i data-lucide="bookmark-check"></i>'
-      : '<i data-lucide="bookmark-plus"></i>';
-    renderIcons();
+    openWatchPage();
   }
 
   function buildPlayerUrl(item) {
     const url = new URL(item.embedUrl || getEmbedUrl(item));
     const params = url.searchParams;
     const saved = getSavedProgressForItem(item);
-    params.set("primaryColor", state.subtitles.color || "#4fc3b1");
+    params.set("primaryColor", state.subtitles.color || "#e50914");
     params.set("title", getDisplayTitle(item));
     params.set("showTitle", "true");
     if (item.poster_url) params.set("poster", item.poster_url);
@@ -1043,88 +1230,24 @@
     return url.toString();
   }
 
-  function openDownloadSource() {
-    if (!state.selectedPlayable) return;
-    const url = state.currentUrl || buildPlayerUrl(state.selectedPlayable);
-    window.open(url, "_blank", "noopener,noreferrer");
-    toast("Opened the player in a new tab.");
-  }
-
-  function handlePlayerMessage(event) {
-    if (!String(event.origin || "").includes("vaplayer.ru")) return;
-    if (!event.data || event.data.type !== "PLAYER_EVENT") return;
-    const data = event.data.data || {};
-    const progress = Number(data.player_progress) || 0;
-    const duration = Number(data.player_duration) || 0;
-    if (progress > 0) saveContinueProgress(progress, duration);
-    updateProgress(progress, duration);
-    if (data.player_status === "completed") loadNextEpisode();
-  }
-
-  function loadNextEpisode() {
-    const current = state.selectedPlayable;
-    if (!current || current.kind !== "episode") return;
-    const showId = getShowId(current);
-    const episodes = state.db.episodeCache.get(showId) || [];
-    const next = episodes.find((episode) =>
-      Number(episode.season) === Number(current.season) &&
-      Number(episode.episode) === Number(current.episode) + 1
-    );
-    if (next) selectItem(next, true);
-  }
-
-  function updateProgress(progress, duration) {
-    els.progressTime.textContent = formatTime(progress);
-    els.durationTime.textContent = formatTime(duration);
-    const percent = duration ? Math.min(100, Math.max(0, (progress / duration) * 100)) : 0;
-    els.progressFill.style.width = `${percent}%`;
-  }
-
-  function saveContinueProgress(progress, duration) {
-    const item = state.selectedPlayable || state.selected;
-    if (!item) return;
-    const entry = {
-      key: getContinueKey(item),
-      item: snapshotItem(item),
-      progress,
-      duration,
-      updatedAt: Date.now(),
-    };
-    state.continueItems.set(entry.key, entry);
-    if (item.kind === "episode") {
-      state.continueItems.set(getContinueShowKey(item), { ...entry, key: getContinueShowKey(item) });
-    }
-    localStorage.setItem(STORAGE.continueItems, JSON.stringify(Object.fromEntries(state.continueItems.entries())));
-    localStorage.setItem(getProgressKey(item), String(progress));
-    renderContinueWatching();
-    renderShowDetail();
-  }
-
-  function renderContinueWatching() {
-    const entries = [...state.continueItems.values()]
+  function getContinueEntries() {
+    return [...state.continueItems.values()]
       .filter((entry) => entry.item && entry.progress > 5 && !String(entry.key).startsWith("episode:"))
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .slice(0, 10);
+  }
 
-    els.continueSection.hidden = !entries.length;
-    if (!entries.length) return;
-    els.continueRail.replaceChildren(...entries.map((entry) => {
-      const item = entry.item;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "continue-card";
-      button.dataset.continueKey = entry.key;
-      const percent = entry.duration ? Math.min(100, Math.round((entry.progress / entry.duration) * 100)) : 0;
-      button.innerHTML = `
-        <span class="continue-poster">${item.poster_url ? `<img src="${escapeHTML(item.poster_url)}" alt="">` : escapeHTML(getInitials(getDisplayTitle(item)))}</span>
-        <span class="continue-copy">
-          <strong>${escapeHTML(getDisplayTitle(item))}</strong>
-          <small>${escapeHTML(getTypeLabel(item))} • ${formatTime(entry.progress)}</small>
-          <span class="mini-progress"><span style="width: ${percent}%"></span></span>
-        </span>
-      `;
-      return button;
-    }));
+  function removeContinueItem(key) {
+    const entry = state.continueItems.get(key);
+    if (!entry?.item) return;
+    state.continueItems.delete(key);
+    if (entry.item.kind === "episode") {
+      state.continueItems.delete(getContinueKey(entry.item));
+      state.continueItems.delete(getContinueShowKey(entry.item));
+    }
+    localStorage.setItem(STORAGE.continueItems, JSON.stringify(Object.fromEntries(state.continueItems.entries())));
+    localStorage.removeItem(getProgressKey(entry.item));
+    renderShell();
   }
 
   function toggleWatchlist(item) {
@@ -1264,6 +1387,7 @@
         };
     item.key = getItemKey(item);
     state.itemMap.set(item.key, item);
+    closeIdModal();
     selectItem(item, true);
   }
 
@@ -1271,35 +1395,11 @@
     const isMovie = els.manualType.value === "movie";
     els.manualSeason.disabled = isMovie;
     els.manualEpisode.disabled = isMovie;
-  }
-
-  function readSubtitleForm() {
-    state.subtitles = {
-      lang: els.subtitleLang.value,
-      url: els.subtitleUrl.value.trim(),
-      label: els.subtitleLabel.value || "Custom",
-      code: els.subtitleCode.value || els.subtitleLang.value,
-      isDefault: els.subtitleDefault.checked,
-      color: els.playerColor.value || "#4fc3b1",
-    };
-  }
-
-  function syncSubtitleForm() {
-    els.subtitleLang.value = state.subtitles.lang;
-    els.subtitleUrl.value = state.subtitles.url;
-    els.subtitleLabel.value = state.subtitles.label;
-    els.subtitleCode.value = state.subtitles.code;
-    els.subtitleDefault.checked = state.subtitles.isDefault;
-    els.playerColor.value = state.subtitles.color;
-    applyAccentColor();
-  }
-
-  function storeSubtitleState() {
-    localStorage.setItem(STORAGE.subtitles, JSON.stringify(state.subtitles));
+    els.manualEpisodeFields.hidden = isMovie;
   }
 
   function applyAccentColor() {
-    document.documentElement.style.setProperty("--accent", state.subtitles.color || "#4fc3b1");
+    document.documentElement.style.setProperty("--accent", state.subtitles.color || "#e50914");
   }
 
   function getEmbedUrl(item) {
@@ -1430,19 +1530,6 @@
         if (cached) return cached;
       }
       throw error;
-    }
-  }
-
-  function castSelected() {
-    toast("VidAPI is an iframe player. For Chromecast, use Chrome's Cast tab or add a direct HLS/MP4 provider.");
-  }
-
-  async function copyToClipboard(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast("Embed link copied.");
-    } catch {
-      toast("Could not copy link.");
     }
   }
 
