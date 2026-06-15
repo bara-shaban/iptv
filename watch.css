@@ -93,6 +93,34 @@ body {
   min-height: 2.1rem;
 }
 
+.next-episode-button {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 0.25rem;
+}
+
+.next-episode-button::before {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.28rem;
+  left: 0.55rem;
+  height: 0.18rem;
+  content: "";
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+.watch-button-progress {
+  position: absolute;
+  bottom: 0.28rem;
+  left: 0.55rem;
+  width: 0%;
+  height: 0.18rem;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 160ms linear;
+}
+
 .watch-copy {
   display: grid;
   gap: 0.15rem;
@@ -129,6 +157,61 @@ body {
   background: #000;
 }
 
+#watchFrame[hidden],
+.watch-video[hidden] {
+  display: none;
+}
+
+.watch-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  object-fit: contain;
+}
+
+.watch-status {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: min(34rem, calc(100vw - 2rem));
+  min-height: 3.25rem;
+  padding: 0.85rem 1rem;
+  color: var(--text);
+  text-align: center;
+  background: rgba(8, 8, 11, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px);
+  transform: translate(-50%, -50%);
+}
+
+.watch-status[hidden] {
+  display: none;
+}
+
+.watch-spinner {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  border: 2px solid rgba(255, 255, 255, 0.24);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: watch-spin 850ms linear infinite;
+}
+
+@keyframes watch-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .watch-empty {
   position: absolute;
   inset: 0;
@@ -156,6 +239,169 @@ body {
 
 .watch-empty a {
   color: var(--text);
+}
+
+.next-episode-card {
+  position: fixed;
+  z-index: 4;
+  right: 1rem;
+  bottom: 1rem;
+  display: grid;
+  gap: 0.8rem;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 1rem;
+  color: var(--text);
+  background: rgba(8, 8, 11, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(18px);
+}
+
+.next-episode-card[hidden] {
+  display: none;
+}
+
+.next-episode-copy {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.next-episode-copy p,
+.next-episode-copy h2 {
+  margin: 0;
+}
+
+.next-episode-copy p {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.next-episode-copy h2 {
+  overflow: hidden;
+  font-size: 1rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.next-episode-copy span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.next-progress {
+  height: 0.45rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.next-progress span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width 160ms linear;
+}
+
+.next-now-button {
+  justify-self: start;
+  min-height: 2.2rem;
+  background: rgba(229, 9, 20, 0.88);
+  border-color: rgba(229, 9, 20, 0.9);
+}
+
+.direct-source-panel {
+  position: absolute;
+  z-index: 4;
+  top: 4.6rem;
+  right: 1rem;
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+  width: min(32rem, calc(100vw - 2rem));
+  padding: 1rem;
+  color: var(--text);
+  background: rgba(8, 8, 11, 0.94);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(18px);
+}
+
+.direct-source-panel[hidden] {
+  display: none;
+}
+
+.direct-source-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.direct-source-heading p,
+.direct-source-heading h2 {
+  margin: 0;
+}
+
+.direct-source-heading p {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.direct-source-heading h2 {
+  margin-top: 0.15rem;
+  font-size: 1rem;
+}
+
+.direct-source-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.direct-source-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.direct-source-form span {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.direct-source-form input {
+  width: 100%;
+  min-height: 2.55rem;
+  padding: 0 0.75rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.direct-source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.direct-play-button {
+  background: rgba(229, 9, 20, 0.88);
+  border-color: rgba(229, 9, 20, 0.9);
 }
 
 .episode-panel {
@@ -341,6 +587,25 @@ body {
     left: 0.75rem;
     width: auto;
     max-height: calc(100dvh - 9.65rem);
+  }
+
+  .direct-source-panel {
+    top: 8.9rem;
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+  }
+
+  .next-episode-card {
+    right: 0.75rem;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+  }
+
+  .watch-status {
+    width: calc(100vw - 1.5rem);
+    max-width: none;
   }
 
   .manual-episode-jump {
