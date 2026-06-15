@@ -1,4 +1,8 @@
 window.STREAMLINE_CONFIG = {
+  // Public backend base URL for hosted static builds such as GitHub Pages.
+  // Leave blank for local dev, or set to an HTTPS tunnel/server URL such as ngrok.
+  backendBaseUrl: "https://steelless-tetartohedrally-terina.ngrok-free.dev",
+
   // Optional: put your own stream resolver here when your server can return a direct HLS/MP4 source.
   // Example: "https://your-server.example/api.php"
   // The app calls it with id/type/season/episode plus imdb/tmdb when available.
@@ -13,6 +17,7 @@ window.STREAMLINE_CONFIG = {
   streamResolverUrl: "/__streamline-resolve",
   preferDirectResolver: true,
   directPlayerEngine: "auto",
+  chromeCastReceiverAppId: "CC1AD845",
   // Leave this off for rotating/signed HLS links. Turn it on only for stable streams.
   autoUseCapturedSources: false,
   trustedPlayerOrigins: [],

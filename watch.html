@@ -6,7 +6,7 @@
     <meta name="color-scheme" content="dark">
     <title>Watch - Bara Al-Wa7sh</title>
     <link rel="preconnect" href="https://vaplayer.ru">
-    <link rel="stylesheet" href="watch.css">
+    <link rel="stylesheet" href="watch.css?v=browser-player-20260524">
   </head>
   <body>
     <main class="watch-shell">
@@ -18,10 +18,29 @@
         </div>
         <div class="watch-actions">
           <button class="watch-button" id="watchEpisodeToggle" type="button" hidden>Episodes</button>
+          <button class="watch-button next-episode-button" id="watchNextEpisode" type="button" hidden>
+            <span>Next Episode</span>
+            <span class="watch-button-progress" id="watchNextProgress" aria-hidden="true"></span>
+          </button>
+          <button class="watch-button" id="watchDirectToggle" type="button">Source</button>
+          <button class="watch-button" id="watchCast" type="button" hidden>Cast</button>
+          <button class="watch-button" id="watchPip" type="button" hidden>PiP</button>
           <button class="watch-button" id="watchSourceToggle" type="button" hidden>Try source</button>
           <button class="watch-button" id="watchRetry" type="button">Reload</button>
         </div>
       </header>
+
+      <video
+        id="watchVideo"
+        class="watch-video"
+        controls
+        playsinline
+        preload="metadata"
+        x-webkit-airplay="allow"
+        hidden
+      ></video>
+
+      <div class="watch-status" id="watchStatus" hidden></div>
 
       <iframe
         id="watchFrame"
@@ -33,10 +52,43 @@
       ></iframe>
 
       <section class="watch-empty" id="watchEmpty" hidden>
-        <h2>No video selected</h2>
-        <p>Choose a movie or episode from the browse page.</p>
+        <h2 id="watchEmptyTitle">No video selected</h2>
+        <p id="watchEmptyCopy">Choose a movie or episode from the browse page.</p>
         <a href="index.html">Back to browse</a>
       </section>
+
+      <aside class="direct-source-panel" id="directSourcePanel" hidden aria-label="Direct source">
+        <div class="direct-source-heading">
+          <div>
+            <p>Direct Source</p>
+            <h2>Media URL</h2>
+          </div>
+          <button class="watch-button compact" id="closeDirectSourcePanel" type="button" aria-label="Close source">Close</button>
+        </div>
+
+        <form class="direct-source-form" id="directSourceForm">
+          <label>
+            <span>URL</span>
+            <input id="directSourceInput" type="url" inputmode="url" placeholder="https://...m3u8 or .mp4" autocomplete="off">
+          </label>
+          <div class="direct-source-actions">
+            <button class="watch-button direct-play-button" type="submit">Open</button>
+            <button class="watch-button" id="useIframeSource" type="button">Iframe</button>
+          </div>
+        </form>
+      </aside>
+
+      <aside class="next-episode-card" id="nextEpisodeCard" hidden aria-live="polite">
+        <div class="next-episode-copy">
+          <p>Playing Next</p>
+          <h2 id="nextEpisodeTitle">Episode</h2>
+          <span id="nextEpisodeMeta">Starting soon</span>
+        </div>
+        <div class="next-progress" aria-hidden="true">
+          <span id="nextEpisodeProgress"></span>
+        </div>
+        <button class="watch-button next-now-button" id="nextEpisodeNow" type="button">Play Now</button>
+      </aside>
 
       <aside class="episode-panel" id="episodePanel" hidden aria-label="Episodes">
         <div class="episode-panel-heading">
@@ -64,6 +116,9 @@
       </aside>
     </main>
 
-    <script src="watch.js"></script>
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16/dist/hls.min.js"></script>
+    <script src="watch.js?v=browser-player-20260524"></script>
+    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
   </body>
 </html>
