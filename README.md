@@ -89,26 +89,10 @@ Subtitle settings are passed as VidAPI player query parameters, including `ds_la
 
 Playback progress is stored in browser storage. Movies resume by ID, and TV shows remember the last episode plus the saved timeline position.
 
-The watch page supports two playback modes:
-
-- Iframe mode uses the existing VidAPI/Vaplayer embed URLs.
-- Direct source mode plays an authorized `.mp4`, `.webm`, or browser-supported `.m3u8` URL in the app's own `<video>` player.
-
-Open `watch.html?src={ENCODED_MEDIA_URL}&title={TITLE}` or use the watch page's `Source` button to paste a direct media URL. Safari supports HLS `.m3u8` playback natively, and Chromium/Firefox use HLS.js when available.
-
-For browser and app playback, the media host must allow direct playback from your app. For web builds that means CORS headers on the HLS playlist and segment files. For native app builds, use the same direct URLs with a native video component such as `react-native-video`, but signed URLs can still expire or be blocked by the media host.
-
-The local `yt-dlp/` checkout can inspect URLs you are authorized to access, but it must run locally or server-side, not inside the browser:
-
-```bash
-python3 yt-dlp/yt_dlp/__main__.py -g "https://example.com/video-page"
-python3 yt-dlp/yt_dlp/__main__.py -J "https://example.com/video-page"
-```
-
-Paste a direct URL from `-g` into the `Source` panel when it is an authorized playable stream. Cross-origin iframe internals are not readable by the static app, and signed stream URLs may expire or fail browser or app playback checks.
+The download button opens the current VidAPI player source. VidAPI embeds do not expose a direct MP4/HLS download URL to the app.
 
 ## Cast
 
-The watch page shows `Cast` and `PiP` controls when direct source mode is active. `Cast` tries Chrome Cast first, then Safari AirPlay, then the browser Remote Playback API, then Picture in Picture as a fallback. Chrome Cast devices must be able to reach the media URL, so hosted builds should set `STREAMLINE_CONFIG.backendBaseUrl` to a public HTTPS backend or tunnel. VidAPI iframe mode cannot be cast as a direct video stream from this app; use browser-level `Cast tab` for iframes.
+The Cast button is present, but VidAPI is an iframe provider. True Chromecast playback requires a direct HLS/MP4 stream or a cast-compatible provider. With VidAPI embeds, use Chrome's browser-level `Cast tab`.
 
 Use the API and embedded content only for content and domains you are authorized to use.

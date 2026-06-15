@@ -1,5 +1,4 @@
 data/.catalog-cache/
-data/dev-*.ndjson
 node_modules/
 .DS_Store
 *.log

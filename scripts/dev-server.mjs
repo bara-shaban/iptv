@@ -57,7 +57,7 @@ const server = createServer(async (request, response) => {
       }
 
       if (request.method === "GET" || request.method === "HEAD") {
-        await handleStreamProxy(requestUrl, response, request);
+        await handleStreamProxy(requestUrl, response, request.method);
         return;
       }
 
@@ -128,18 +128,17 @@ async function handleNetworkLog(request, response) {
   sendJSON(response, 200, { ok: true });
 }
 
-async function handleStreamProxy(requestUrl, response, request) {
+async function handleStreamProxy(requestUrl, response, method = "GET") {
   const source = requestUrl.searchParams.get("url") || "";
   if (!isHttpUrl(source)) {
     sendJSON(response, 400, { ok: false, error: "Missing URL" });
     return;
   }
 
-  const method = request.method || "GET";
   const isHead = method === "HEAD";
   const upstream = await fetch(source, {
     method: isHead ? "HEAD" : "GET",
-    headers: getProxyRequestHeaders(request),
+    headers: getProxyRequestHeaders(),
   });
 
   if (!upstream.ok) {
@@ -194,7 +193,6 @@ async function handleStreamProxy(requestUrl, response, request) {
 const VAPLAYER_API = "https://streamdata.vaplayer.ru/api.php";
 const VAPLAYER_REFERER = "https://nextgencloudfabric.com/";
 const VAPLAYER_ORIGIN = "https://nextgencloudfabric.com";
-const DEFAULT_BROWSER_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
 const resolveCache = new Map();
 const RESOLVE_TTL_MS = 5 * 60 * 1000;
 
@@ -228,7 +226,7 @@ async function handleStreamResolve(requestUrl, response) {
   try {
     const res = await fetch(upstream.toString(), {
       headers: {
-        "user-agent": DEFAULT_BROWSER_USER_AGENT,
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
         referer: VAPLAYER_REFERER,
         origin: VAPLAYER_ORIGIN,
         accept: "application/json, text/plain, */*",
@@ -310,16 +308,21 @@ function getProxyContentType(source, upstreamType) {
   return upstreamType || "application/octet-stream";
 }
 
-function getProxyRequestHeaders(request) {
+function getProxyRequestHeaders() {
   const headers = {
-    accept: request.headers.accept || "*/*",
-    referer: process.env.STREAMLINE_PROXY_REFERER || VAPLAYER_REFERER,
-    origin: process.env.STREAMLINE_PROXY_ORIGIN || VAPLAYER_ORIGIN,
-    "user-agent": process.env.STREAMLINE_PROXY_USER_AGENT || DEFAULT_BROWSER_USER_AGENT,
+    accept: "*/*",
   };
 
-  if (request.headers.range) {
-    headers.range = request.headers.range;
+  if (process.env.STREAMLINE_PROXY_REFERER) {
+    headers.referer = process.env.STREAMLINE_PROXY_REFERER;
+  }
+
+  if (process.env.STREAMLINE_PROXY_ORIGIN) {
+    headers.origin = process.env.STREAMLINE_PROXY_ORIGIN;
+  }
+
+  if (process.env.STREAMLINE_PROXY_USER_AGENT) {
+    headers["user-agent"] = process.env.STREAMLINE_PROXY_USER_AGENT;
   }
 
   return headers;
