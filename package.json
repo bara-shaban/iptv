@@ -6,6 +6,7 @@
     "build:catalog:shows": "node scripts/build-catalog-db.mjs --skip-episodes",
     "build:catalog:episode-ids": "node scripts/build-catalog-db.mjs --episodes-from-ids",
     "build:cache-manifest": "node scripts/build-cache-manifest.mjs",
-    "serve": "python3 -m http.server 5173"
+    "serve": "python3 -m http.server 5173",
+    "dev": "node scripts/dev-server.mjs"
   }
 }
